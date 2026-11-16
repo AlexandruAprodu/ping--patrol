@@ -1,0 +1,27 @@
+syntax = "proto3";
+package signalwatch.rules.v1;
+
+service RulesEngine {
+  rpc EvaluateCheck (CheckRequest) returns (CheckDecision);
+}
+
+message CheckRequest {
+  string monitor_id = 1;
+  bool healthy = 2;
+  int32 failure_threshold = 3;
+  int32 status_code = 4; // 0 = no HTTP response (timeout / network error)
+  double latency_ms = 5;
+}
+
+enum Transition {
+  TRANSITION_UNSPECIFIED = 0;
+  NONE = 1;
+  TRIGGERED = 2;
+  RECOVERED = 3;
+}
+
+message CheckDecision {
+  Transition transition = 1;
+  int32 consecutive_failures = 2;
+  bool alerting = 3;
+}
