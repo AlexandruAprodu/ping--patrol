@@ -1,0 +1,1 @@
+DATABASE_URL = "postgresql+asyncpg://ping_user:secret123@localhost:5432/ping_incidents"
