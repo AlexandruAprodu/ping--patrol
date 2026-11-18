@@ -1,8 +1,3 @@
-"""Create a service's PostgreSQL database and its SQLAlchemy tables.
-
-Usage: python -m common.db.db_init <monitoring|rules|incidents|alerts|fake_target>
-"""
-
 from __future__ import annotations
 
 import asyncio
@@ -17,7 +12,18 @@ from sqlalchemy.ext.asyncio import create_async_engine
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-SERVICES = frozenset({"monitoring", "rules", "incidents", "alerts", "fake_target"})
+SERVICES_DIR = PROJECT_ROOT / "services"
+
+if __package__ in (None, ""):
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+
+def discover_services() -> list[str]:
+    return sorted(
+        path.name
+        for path in SERVICES_DIR.iterdir()
+        if path.is_dir() and path.name.isidentifier() and not path.name.startswith("_")
+    )
 
 
 def load_env() -> None:
@@ -40,13 +46,16 @@ def load_env() -> None:
 
 def get_database_url(service: str) -> URL:
     configured_url = os.environ.get(f"{service.upper()}_DATABASE_URL")
+    if not configured_url and (SERVICES_DIR / service / "constants.py").is_file():
+        constants = import_module(f"services.{service}.constants")
+        configured_url = getattr(constants, "DATABASE_URL", None)
     if configured_url:
         url = make_url(configured_url)
     else:
         url = URL.create(
             drivername="postgresql+asyncpg",
-            username=os.environ.get("POSTGRES_USER", "poc"),
-            password=os.environ.get("POSTGRES_PASSWORD", "local_development_only"),
+            username=os.environ.get("POSTGRES_USER", "ping_user"),
+            password=os.environ.get("POSTGRES_PASSWORD", "secret123"),
             host=os.environ.get("POSTGRES_HOST", "127.0.0.1"),
             port=int(os.environ.get("POSTGRES_PORT", "5432")),
             database=os.environ.get(f"{service.upper()}_DB_NAME", f"ping_{service}"),
@@ -58,7 +67,7 @@ def get_database_url(service: str) -> URL:
 
 
 async def init_database(service: str) -> None:
-    if service not in SERVICES:
+    if service not in discover_services():
         raise ValueError(f"Unknown microservice: {service}")
 
     load_env()
@@ -74,13 +83,17 @@ async def init_database(service: str) -> None:
                 text("SELECT 1 FROM pg_database WHERE datname = :database_name"),
                 {"database_name": url.database},
             )
-            if not database_exists:
-                database_name = connection.dialect.identifier_preparer.quote_identifier(url.database)
-                await connection.exec_driver_sql(f"CREATE DATABASE {database_name}")
+            if database_exists:
+                print(f"[{service}] Database already exists: {url.database}; skipped.")
+                return
+            database_name = connection.dialect.identifier_preparer.quote_identifier(url.database)
+            await connection.exec_driver_sql(f"CREATE DATABASE {database_name}")
     finally:
         await admin_engine.dispose()
 
-    # Import only the chosen service's model module.
+    print(f"[{service}] Database created: {url.database}")
+    if not (SERVICES_DIR / service / "models.py").is_file():
+        return
     models = import_module(f"services.{service}.models")
     base = getattr(models, "Base", None)
     if base is None:
@@ -101,13 +114,14 @@ async def init_database(service: str) -> None:
     print(f"[{service}] Tables: {', '.join(sorted(base.metadata.tables))}")
 
 
+async def init_databases() -> None:
+    load_env()
+    for service in discover_services():
+        await init_database(service)
+
+
 def main() -> None:
-    if len(sys.argv) != 2 or sys.argv[1] not in SERVICES:
-        raise SystemExit(
-            "Usage: python -m common.db.db_init "
-            "<monitoring|rules|incidents|alerts|fake_target>"
-        )
-    asyncio.run(init_database(sys.argv[1]))
+    asyncio.run(init_databases())
 
 
 if __name__ == "__main__":

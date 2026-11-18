@@ -57,7 +57,7 @@ tmux bind-key -T copy-mode-vi y send-keys -X copy-pipe-and-cancel "$clipboard_co
 tmux select-window -t "$SESSION:monitoring"
 
 printf '\n[ready] Independently selectable tmux windows:\n'
-printf '  monitoring | rules | incidents | alerts | fake-target | celery | rabbitmq | redis | postgresql\n'
+printf '  monitoring | rules | incidents | alerts | fake-target | users | celery | rabbitmq | redis | postgresql\n'
 printf '  Ctrl+B, then W: select a window from a list\n'
 printf '  Ctrl+B, then its window number: jump to a window directly\n'
 printf '  Or click its name in the bottom tmux bar\n'

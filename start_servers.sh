@@ -85,6 +85,7 @@ start_http rules       services.rules.main       8002
 start_http incidents   services.incidents.main   8003
 start_http alerts      services.alerts.main      8004
 start_http fake-target services.fake_target.main 8090
+start_http users       services.users.main       8005
 
 #start_grpc
 

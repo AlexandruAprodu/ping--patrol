@@ -1,0 +1,6 @@
+MONITORING_BASE_URL = "http://localhost:8001"
+RULES_BASE_URL = "http://localhost:8002"
+INCIDENTS_BASE_URL = "http://localhost:8003"
+ALERTS_BASE_URL = "http://localhost:8004"
+USERS_BASE_URL = "http://localhost:8005"
+FAKE_TARGET_BASE_URL = "http://localhost:8090"

@@ -26,6 +26,10 @@ class Incident(StrictModel):
     updated_at: datetime
 
 
+class OwnedIncident(Incident):
+    owner_id: UUID
+
+
 class CommentInput(StrictModel):
     type: Literal["comment"]
     author: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=40)]

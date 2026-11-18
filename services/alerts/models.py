@@ -22,6 +22,7 @@ class AlertEventModel(Base):
 
     # Incoming event UUID is the primary key for idempotent redelivery handling.
     event_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True)
+    owner_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), nullable=False, index=True)
     incident_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), nullable=False, index=True)
     event_type: Mapped[str] = mapped_column(String(32), nullable=False)
     # Snapshot from Incidents REST; SSE still delivers only to current connections.

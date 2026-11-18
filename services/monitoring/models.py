@@ -19,6 +19,7 @@ class MonitorModel(Base):
         CheckConstraint("failure_threshold BETWEEN 1 AND 10", name="ck_monitoring_threshold"),
     )
 
+    owner_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), nullable=False, index=True)
     id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid4)
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     url: Mapped[str] = mapped_column(String(2083), nullable=False)

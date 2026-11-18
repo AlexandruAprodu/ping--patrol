@@ -25,6 +25,7 @@ class IncidentModel(Base):
         ),
     )
 
+    owner_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), nullable=False, index=True)
     id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid4)
     # Cross-service reference: stored as UUID, without a database foreign key.
     monitor_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), nullable=False, index=True)

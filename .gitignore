@@ -9,3 +9,5 @@ generated/
 .coverage
 htmlcov/
 .DS_Store
+
+services/users/.jwt_secret
