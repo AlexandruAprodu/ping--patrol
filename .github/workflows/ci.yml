@@ -13,6 +13,10 @@ jobs:
     name: Python unit and integration tests
     runs-on: ubuntu-24.04
     timeout-minutes: 15
+    env:
+      USERS_DATABASE_URL: postgresql+asyncpg://ping_test:ping_test@127.0.0.1:5432/ping_users_test
+      TEST_MONITORING_DATABASE_URL: postgresql+asyncpg://ping_test:ping_test@127.0.0.1:5432/ping_monitoring_test
+      USERS_JWT_SECRET: ci-only-very-long-test-secret-do-not-use-in-production-2026
 
     steps:
       - name: Checkout
@@ -46,6 +50,13 @@ jobs:
           else
             echo "No unit tests yet; skipping."
           fi
+
+      - name: Start PostgreSQL for integration tests (no Docker)
+        run: |
+          sudo systemctl start postgresql.service
+          sudo -u postgres psql -v ON_ERROR_STOP=1 -c "CREATE ROLE ping_test LOGIN PASSWORD 'ping_test';"
+          sudo -u postgres psql -v ON_ERROR_STOP=1 -c "CREATE DATABASE ping_users_test OWNER ping_test;"
+          sudo -u postgres psql -v ON_ERROR_STOP=1 -c "CREATE DATABASE ping_monitoring_test OWNER ping_test;"
 
       - name: Integration tests
         run: |
