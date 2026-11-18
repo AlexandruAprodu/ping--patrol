@@ -3,6 +3,7 @@ from types import SimpleNamespace
 
 import httpx
 import pytest_asyncio
+from sqlalchemy.engine import make_url
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 
@@ -20,7 +21,7 @@ async def database_schema():
     from services.users.models import Base as UsersBase
     from services.monitoring.models import Base as MonitoringBase
 
-    if str(users_db.engine.url) != users_url:
+    if users_db.engine.url != make_url(users_url):
         raise RuntimeError("The Users engine must point to USERS_DATABASE_URL before importing the service.")
 
     monitoring_engine = create_async_engine(monitoring_url)
