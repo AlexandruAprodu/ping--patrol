@@ -1,19 +1,23 @@
 from datetime import datetime
 from typing import Annotated, Literal
 from uuid import UUID
-from pydantic import BaseModel, ConfigDict, StringConstraints
+from pydantic import StringConstraints
 
-
-class StrictModel(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+from common.schemas import DependencyStatus, ReadinessResponse, StrictModel
 
 
 IncidentStatus = Literal["OPEN", "ACKNOWLEDGED", "RESOLVED"]
 
 
-class HealthResponse(StrictModel):
-    status: Literal["ok"]
+class IncidentsDependencies(StrictModel):
+    postgresql: DependencyStatus
+    rabbitmq: DependencyStatus
+    consumer: DependencyStatus
+
+
+class HealthResponse(ReadinessResponse):
     service: Literal["incidents"]
+    dependencies: IncidentsDependencies
 
 
 class Incident(StrictModel):
@@ -24,6 +28,10 @@ class Incident(StrictModel):
     status: IncidentStatus
     created_at: datetime
     updated_at: datetime
+
+
+class OwnedIncident(Incident):
+    owner_id: UUID
 
 
 class CommentInput(StrictModel):

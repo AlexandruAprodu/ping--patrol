@@ -1,8 +1,13 @@
 from typing import Literal
-from pydantic import BaseModel, ConfigDict
+
+from common.schemas import DependencyStatus, ReadinessResponse, StrictModel
 
 
-class HealthResponse(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    status: Literal["ok"]
+class RulesDependencies(StrictModel):
+    grpc_server: DependencyStatus
+    rule_engine: DependencyStatus
+
+
+class HealthResponse(ReadinessResponse):
     service: Literal["rules"]
+    dependencies: RulesDependencies

@@ -4,14 +4,15 @@ from uuid import UUID, uuid4
 
 from sqlalchemy import CheckConstraint, DateTime, Integer, String, func, text
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column
 
 
-class Base(DeclarativeBase):
-    pass
+from common.db.base import OwnedResource, create_service_base
+
+Base = create_service_base()
 
 
-class MonitorModel(Base):
+class MonitorModel(OwnedResource, Base):
     __tablename__ = "monitoring_monitors"
     __table_args__ = (
         CheckConstraint("length(btrim(name)) BETWEEN 1 AND 100", name="ck_monitoring_name"),

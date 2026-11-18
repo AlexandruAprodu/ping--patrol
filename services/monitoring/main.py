@@ -1,6 +1,8 @@
 """Monitoring HTTP route skeleton. Contracts: API.md §2."""
 from uuid import UUID
-from fastapi import FastAPI, status
+from fastapi import FastAPI, status, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+from .db import get_db
 from .schemas import CheckResult, HealthResponse, Monitor, MonitorCreate
 
 app = FastAPI(title="SignalWatch Monitoring", version="1.0.0")
@@ -11,9 +13,12 @@ async def health() -> HealthResponse:
     ...
 
 
-@app.post("/monitors", response_model=Monitor, status_code=status.HTTP_201_CREATED)
-async def create_monitor(body: MonitorCreate) -> Monitor:
+@app.post("/monitors", response_model=Monitor,
+          status_code=status.HTTP_201_CREATED)
+async def create_monitor(body: MonitorCreate,
+                         session: AsyncSession = Depends(get_db)) -> Monitor:
     ...
+
 
 
 @app.get("/monitors", response_model=list[Monitor])

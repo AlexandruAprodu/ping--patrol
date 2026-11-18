@@ -1,9 +1,10 @@
 from typing import Literal
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import Field, field_validator
+
+from common.schemas import StrictModel
 
 
-class Mode(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+class Mode(StrictModel):
     status_code: int = Field(default=200, ge=200, le=599, strict=True)
     delay_ms: int = Field(default=0, ge=0, le=10_000, strict=True)
 
@@ -15,7 +16,6 @@ class Mode(BaseModel):
         return value
 
 
-class TargetHealth(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+class TargetHealth(StrictModel):
     service: Literal["fake-target"]
     healthy: bool

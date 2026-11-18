@@ -4,14 +4,15 @@ from uuid import UUID
 
 from sqlalchemy import CheckConstraint, DateTime, String, func
 from sqlalchemy.dialects.postgresql import JSONB, UUID as PG_UUID
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column
 
 
-class Base(DeclarativeBase):
-    pass
+from common.db.base import OwnedResource, create_service_base
+
+Base = create_service_base()
 
 
-class AlertEventModel(Base):
+class AlertEventModel(OwnedResource, Base):
     __tablename__ = "alerts_events"
     __table_args__ = (
         CheckConstraint(

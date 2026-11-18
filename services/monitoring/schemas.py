@@ -1,16 +1,21 @@
 from datetime import datetime
 from typing import Annotated, Literal
 from uuid import UUID
-from pydantic import BaseModel, ConfigDict, Field, HttpUrl, StringConstraints, field_validator
+from pydantic import Field, HttpUrl, StringConstraints, field_validator
+
+from common.schemas import DependencyStatus, ReadinessResponse, StrictModel
 
 
-class StrictModel(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+class MonitoringDependencies(StrictModel):
+    postgresql: DependencyStatus
+    rules_grpc: DependencyStatus
+    rabbitmq: DependencyStatus
+    scheduler: DependencyStatus
 
 
-class HealthResponse(StrictModel):
-    status: Literal["ok"]
+class HealthResponse(ReadinessResponse):
     service: Literal["monitoring"]
+    dependencies: MonitoringDependencies
 
 
 class MonitorCreate(StrictModel):

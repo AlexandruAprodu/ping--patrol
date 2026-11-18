@@ -4,14 +4,15 @@ from uuid import UUID, uuid4
 
 from sqlalchemy import CheckConstraint, DateTime, Index, String, func, text
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column
 
 
-class Base(DeclarativeBase):
-    pass
+from common.db.base import OwnedResource, create_service_base
+
+Base = create_service_base()
 
 
-class IncidentModel(Base):
+class IncidentModel(OwnedResource, Base):
     __tablename__ = "incidents_incidents"
     __table_args__ = (
         CheckConstraint("title = 'HTTP monitor unavailable'", name="ck_incidents_title"),
