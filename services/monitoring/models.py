@@ -4,15 +4,14 @@ from uuid import UUID, uuid4
 
 from sqlalchemy import CheckConstraint, DateTime, Integer, String, func, text
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
-from common.db.base import OwnedResource, create_service_base
+class Base(DeclarativeBase):
+    pass
 
-Base = create_service_base()
 
-
-class MonitorModel(OwnedResource, Base):
+class MonitorModel(Base):
     __tablename__ = "monitoring_monitors"
     __table_args__ = (
         CheckConstraint("length(btrim(name)) BETWEEN 1 AND 100", name="ck_monitoring_name"),
@@ -20,6 +19,7 @@ class MonitorModel(OwnedResource, Base):
         CheckConstraint("failure_threshold BETWEEN 1 AND 10", name="ck_monitoring_threshold"),
     )
 
+    owner_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), nullable=False, index=True)
     id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid4)
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     url: Mapped[str] = mapped_column(String(2083), nullable=False)

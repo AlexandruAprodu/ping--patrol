@@ -1,11 +1,24 @@
 """Monitoring HTTP route skeleton. Contracts: API.md §2."""
 from uuid import UUID
-from fastapi import FastAPI, status, Depends
+
+from common.authentication.auth import verify_auth_user_middleware
+from fastapi import FastAPI, status, Depends, Request, Response, HTTPException
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from .db import get_db
+from .models import MonitorModel
 from .schemas import CheckResult, HealthResponse, Monitor, MonitorCreate
 
 app = FastAPI(title="SignalWatch Monitoring", version="1.0.0")
+
+@app.middleware("http")
+async def verify_user_auth(request: Request, call_next):
+    current_user = await verify_auth_user_middleware(request=request)
+    if "Invalid or expired token." in current_user.values():
+        return Response(status_code=status.HTTP_401_UNAUTHORIZED)
+    request.state.user_id = current_user.get("id")
+    response = await call_next(request)
+    return response
 
 
 @app.get("/health", response_model=HealthResponse)
@@ -15,10 +28,33 @@ async def health() -> HealthResponse:
 
 @app.post("/monitors", response_model=Monitor,
           status_code=status.HTTP_201_CREATED)
-async def create_monitor(body: MonitorCreate,
+async def create_monitor(request: Request, body: MonitorCreate,
                          session: AsyncSession = Depends(get_db)) -> Monitor:
-    ...
+    if await session.scalar(select(MonitorModel.url).where(
+            MonitorModel.url == str(body.url),
+                        MonitorModel.owner_id == UUID(str(request.state.user_id)))
+    ):
+        raise HTTPException(status_code=409,
+                            detail="Monitor URL already exists"
+                            )
 
+    monitor = MonitorModel(
+        owner_id=UUID(str(request.state.user_id)),
+        **body.model_dump(mode="json"),
+    )
+
+    session.add(monitor)
+    await session.flush()
+    await session.commit()
+
+    return Monitor(
+        id=monitor.id,
+        name=monitor.name,
+        url=monitor.url,
+        interval_seconds=monitor.interval_seconds,
+        failure_threshold=monitor.failure_threshold,
+        created_at=monitor.created_at,
+    )
 
 
 @app.get("/monitors", response_model=list[Monitor])

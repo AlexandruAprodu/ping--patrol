@@ -1,11 +1,10 @@
 """Persistence model for the local fake-target test fixture (PostgreSQL)."""
 from sqlalchemy import CheckConstraint, Integer, SmallInteger, text
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
-from common.db.base import create_service_base
-
-Base = create_service_base()
+class Base(DeclarativeBase):
+    pass
 
 
 class FakeTargetModeModel(Base):

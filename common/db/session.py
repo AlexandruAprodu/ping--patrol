@@ -9,4 +9,3 @@ def create_async_session_maker(db_url):
         autoflush=False,
     )
     return AsyncSessionMakerLocal
-

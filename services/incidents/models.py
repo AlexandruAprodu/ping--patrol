@@ -4,15 +4,14 @@ from uuid import UUID, uuid4
 
 from sqlalchemy import CheckConstraint, DateTime, Index, String, func, text
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
-from common.db.base import OwnedResource, create_service_base
+class Base(DeclarativeBase):
+    pass
 
-Base = create_service_base()
 
-
-class IncidentModel(OwnedResource, Base):
+class IncidentModel(Base):
     __tablename__ = "incidents_incidents"
     __table_args__ = (
         CheckConstraint("title = 'HTTP monitor unavailable'", name="ck_incidents_title"),
@@ -26,6 +25,7 @@ class IncidentModel(OwnedResource, Base):
         ),
     )
 
+    owner_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), nullable=False, index=True)
     id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid4)
     # Cross-service reference: stored as UUID, without a database foreign key.
     monitor_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), nullable=False, index=True)

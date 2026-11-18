@@ -1,20 +1,14 @@
 from typing import Literal
-
-from common.schemas import DependencyStatus, ReadinessResponse, StrictModel
+from pydantic import BaseModel, ConfigDict
 from services.incidents.schemas import Incident
 
 
-class AlertsDependencies(StrictModel):
-    rabbitmq: DependencyStatus
-    incidents_rest: DependencyStatus
-    consumer: DependencyStatus
-    sse_dispatcher: DependencyStatus
-
-
-class HealthResponse(ReadinessResponse):
+class HealthResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    status: Literal["ok"]
     service: Literal["alerts"]
-    dependencies: AlertsDependencies
 
 
-class IncidentSsePayload(StrictModel):
+class IncidentSsePayload(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     incident: Incident
