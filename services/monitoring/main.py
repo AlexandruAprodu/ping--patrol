@@ -3,11 +3,12 @@ from uuid import UUID
 
 from common.authentication.auth import verify_auth_user_middleware
 from fastapi import FastAPI, status, Depends, Request, Response, HTTPException
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
+from .constants import MAXIMUM_MONITORS
 from .db import get_db
 from .models import MonitorModel
-from .schemas import CheckResult, HealthResponse, Monitor, MonitorCreate
+from .schemas import CheckResult, HealthResponse, Monitor, MonitorCreate, MonitorList
 
 app = FastAPI(title="SignalWatch Monitoring", version="1.0.0")
 
@@ -30,6 +31,17 @@ async def health() -> HealthResponse:
           status_code=status.HTTP_201_CREATED)
 async def create_monitor(request: Request, body: MonitorCreate,
                          session: AsyncSession = Depends(get_db)) -> Monitor:
+
+    owner_count_monitors = await session.scalar(select(func.count()).select_from(
+        MonitorModel).where(
+        MonitorModel.owner_id == UUID(str(request.state.user_id))
+    ))
+    if owner_count_monitors and owner_count_monitors >= MAXIMUM_MONITORS:
+        raise HTTPException(status_code=403,
+                            detail="The maximum numbers of monitors for this "
+                                   "account has been reached!"
+                            )
+
     if await session.scalar(select(MonitorModel.url).where(
             MonitorModel.url == str(body.url),
                         MonitorModel.owner_id == UUID(str(request.state.user_id)))
@@ -37,6 +49,8 @@ async def create_monitor(request: Request, body: MonitorCreate,
         raise HTTPException(status_code=409,
                             detail="Monitor URL already exists"
                             )
+
+
 
     monitor = MonitorModel(
         owner_id=UUID(str(request.state.user_id)),
@@ -58,18 +72,38 @@ async def create_monitor(request: Request, body: MonitorCreate,
 
 
 @app.get("/monitors", response_model=list[Monitor])
-async def list_monitors() -> list[Monitor]:
-    ...
+async def list_monitors(request: Request,
+                        session: AsyncSession = Depends(get_db)) -> MonitorList:
+    monitors_current_user = await session.scalars(select(
+        MonitorModel).where(
+        MonitorModel.owner_id == UUID(str(request.state.user_id))
+    ).order_by(MonitorModel.created_at.desc()))
+
+    return monitors_current_user
 
 
 @app.get("/monitors/{monitor_id}", response_model=Monitor)
-async def get_monitor(monitor_id: UUID) -> Monitor:
-    ...
+async def get_monitor(monitor_id: UUID, request: Request,
+                        session: AsyncSession = Depends(get_db)) -> Monitor:
+
+    monitor = await session.scalar(select(MonitorModel).where(
+            MonitorModel.id == UUID(str(monitor_id)),
+                        MonitorModel.owner_id == UUID(str(request.state.user_id))))
+
+    return monitor
 
 
 @app.delete("/monitors/{monitor_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_monitor(monitor_id: UUID) -> None:
-    ...
+async def delete_monitor(monitor_id: UUID, request: Request,
+                        session: AsyncSession = Depends(get_db)) -> None:
+    monitor = await session.scalar(select(MonitorModel).where(
+        MonitorModel.id == UUID(str(monitor_id)),
+        MonitorModel.owner_id == UUID(str(request.state.user_id))))
+
+    await session.delete(monitor)
+    await session.flush([monitor])
+    await session.commit()
+    return
 
 
 @app.post("/monitors/{monitor_id}/check", response_model=CheckResult)
