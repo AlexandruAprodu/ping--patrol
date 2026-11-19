@@ -8,9 +8,23 @@ class StrictModel(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
+class DependencyHealth(StrictModel):
+    status: Literal["up", "down"]
+    error: Literal["connection_failed", "timeout", "not_running", "check_failed"] | None
+
+
+class HealthDependencies(StrictModel):
+    postgresql: DependencyHealth
+    rules_grpc: DependencyHealth
+    rabbitmq: DependencyHealth
+    scheduler: DependencyHealth
+
+
 class HealthResponse(StrictModel):
-    status: Literal["ok"]
     service: Literal["monitoring"]
+    status: Literal["healthy", "unhealthy"]
+    checked_at: datetime
+    dependencies: HealthDependencies
 
 
 class MonitorCreate(StrictModel):
