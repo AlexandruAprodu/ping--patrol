@@ -15,8 +15,10 @@ app = FastAPI(title="SignalWatch Monitoring", version="1.0.0")
 @app.middleware("http")
 async def verify_user_auth(request: Request, call_next):
     current_user = await verify_auth_user_middleware(request=request)
+
     if "Invalid or expired token." in current_user.values():
         return Response(status_code=status.HTTP_401_UNAUTHORIZED)
+
     request.state.user_id = current_user.get("id")
     response = await call_next(request)
     return response
@@ -90,6 +92,11 @@ async def get_monitor(monitor_id: UUID, request: Request,
             MonitorModel.id == UUID(str(monitor_id)),
                         MonitorModel.owner_id == UUID(str(request.state.user_id))))
 
+    if not monitor:
+        raise HTTPException(status_code=404,
+                            detail="Monitor not found!"
+                            )
+
     return monitor
 
 
@@ -99,6 +106,11 @@ async def delete_monitor(monitor_id: UUID, request: Request,
     monitor = await session.scalar(select(MonitorModel).where(
         MonitorModel.id == UUID(str(monitor_id)),
         MonitorModel.owner_id == UUID(str(request.state.user_id))))
+
+    if not monitor:
+        raise HTTPException(status_code=404,
+                            detail="Monitor not found!"
+                            )
 
     await session.delete(monitor)
     await session.flush([monitor])
