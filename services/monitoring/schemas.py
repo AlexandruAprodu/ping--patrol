@@ -32,6 +32,10 @@ class Monitor(MonitorCreate):
     created_at: datetime
 
 
+class MonitorList(BaseModel):
+    monitors: list[Monitor]
+
+
 class CheckResult(StrictModel):
     monitor_id: UUID
     checked_at: datetime
