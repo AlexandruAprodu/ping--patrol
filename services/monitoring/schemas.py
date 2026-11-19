@@ -10,21 +10,22 @@ class StrictModel(BaseModel):
 
 class DependencyHealth(StrictModel):
     status: Literal["up", "down"]
-    error: Literal["connection_failed", "timeout", "not_running", "check_failed"] | None
-
-
-class HealthDependencies(StrictModel):
-    postgresql: DependencyHealth
-    rules_grpc: DependencyHealth
-    rabbitmq: DependencyHealth
-    scheduler: DependencyHealth
+    error: Literal[
+        "connection_failed",
+        "timeout",
+        "not_running",
+        "check_failed",
+        "not_configured",
+    ] | None = None
 
 
 class HealthResponse(StrictModel):
-    service: Literal["monitoring"]
     status: Literal["healthy", "unhealthy"]
     checked_at: datetime
-    dependencies: HealthDependencies
+
+    services: dict[str, DependencyHealth]
+    databases: dict[str, DependencyHealth]
+    infrastructure: dict[str, DependencyHealth]
 
 
 class MonitorCreate(StrictModel):

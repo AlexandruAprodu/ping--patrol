@@ -10,6 +10,7 @@ from .db import get_db
 from .models import MonitorModel
 from .schemas import CheckResult, HealthResponse, Monitor, MonitorCreate, MonitorList
 
+
 app = FastAPI(title="SignalWatch Monitoring", version="1.0.0")
 
 @app.middleware("http")
@@ -20,13 +21,35 @@ async def verify_user_auth(request: Request, call_next):
         return Response(status_code=status.HTTP_401_UNAUTHORIZED)
 
     request.state.user_id = current_user.get("id")
+    request.state.role = current_user.get("role")
     response = await call_next(request)
     return response
 
 
 @app.get("/health", response_model=HealthResponse)
-async def health() -> HealthResponse:
-    ...
+async def health(request: Request) -> HealthResponse:
+
+    if not request.state.role == "ADMIN":
+        raise HTTPException(status_code=404,
+                            detail="Page not found!"
+                            )
+
+    from common.health import check_infrastructure
+
+
+    report = await check_infrastructure()
+
+    if report.get("status") == "unhealthy":
+        services_down = [
+            name
+            for name, service in report.get("services", {}).items()
+            if service["status"] == "down"
+        ]
+
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                            detail=f"Services unhealthy: {services_down}")
+
+    return report
 
 
 @app.post("/monitors", response_model=Monitor,
