@@ -44,12 +44,7 @@ jobs:
         run: python -m compileall -q services
 
       - name: Unit tests
-        run: |
-          if [ -d tests/unit ] && find tests/unit -type f \( -name 'test_*.py' -o -name '*_test.py' \) | grep -q .; then
-            python -m pytest tests/unit -q
-          else
-            echo "No unit tests yet; skipping."
-          fi
+        run: python -m pytest tests/users/unit tests/monitoring/unit -q
 
       - name: Start PostgreSQL for integration tests (no Docker)
         run: |
@@ -59,9 +54,4 @@ jobs:
           sudo -u postgres psql -v ON_ERROR_STOP=1 -c "CREATE DATABASE ping_monitoring_test OWNER ping_test;"
 
       - name: Integration tests
-        run: |
-          if [ -d tests/integration ] && find tests/integration -type f \( -name 'test_*.py' -o -name '*_test.py' \) | grep -q .; then
-            python -m pytest tests/integration -q
-          else
-            echo "No integration tests yet; skipping."
-          fi
+        run: python -m pytest tests/users/integration tests/monitoring/integration -q

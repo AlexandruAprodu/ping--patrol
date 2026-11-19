@@ -34,8 +34,8 @@ async def login(client, username, password):
     )
 
 
-async def test_register_login_and_me_with_real_postgres(clients):
-    users, _, _ = clients
+async def test_register_login_and_me_with_real_postgres(users_client):
+    users = users_client
     data, created = await register(users)
 
     assert UUID(created["id"])
@@ -80,8 +80,8 @@ async def test_register_login_and_me_with_real_postgres(clients):
     assert by_email.json()["access_token"]
 
 
-async def test_register_validation_and_duplicate_email_username(clients):
-    users, _, _ = clients
+async def test_register_validation_and_duplicate_email_username(users_client):
+    users = users_client
     payload, _ = await register(users)
 
     invalid = {**user_payload(), "email": "not-an-email"}
@@ -104,8 +104,8 @@ async def test_register_validation_and_duplicate_email_username(clients):
     assert response.json()["detail"] == "Username already exists."
 
 
-async def test_login_rejects_unknown_user_or_bad_password(clients):
-    users, _, _ = clients
+async def test_login_rejects_unknown_user_or_bad_password(users_client):
+    users = users_client
     payload, _ = await register(users)
 
     for identifier, password in (
@@ -117,16 +117,16 @@ async def test_login_rejects_unknown_user_or_bad_password(clients):
         assert response.json()["detail"] == "Invalid credentials."
 
 
-async def test_me_requires_valid_access_token(clients):
-    users, _, _ = clients
+async def test_me_requires_valid_access_token(users_client):
+    users = users_client
     assert (await users.get(f"{BASE}/me/")).status_code == 401
     assert (
         await users.get(f"{BASE}/me/", headers={"Authorization": "Bearer malformed"})
     ).status_code == 401
 
 
-async def test_refresh_rotates_token_and_rejects_reuse(clients):
-    users, _, _ = clients
+async def test_refresh_rotates_token_and_rejects_reuse(users_client):
+    users = users_client
     payload, _ = await register(users)
     result = await login(users, payload["username"], payload["password"])
     assert result.status_code == 200
@@ -148,8 +148,8 @@ async def test_refresh_rotates_token_and_rejects_reuse(clients):
     assert response.json()["detail"] == "Invalid refresh token."
 
 
-async def test_refresh_without_cookie_and_logout_revocation(clients):
-    users, _, _ = clients
+async def test_refresh_without_cookie_and_logout_revocation(users_client):
+    users = users_client
     assert (await users.post(f"{BASE}/refresh/")).status_code == 401
 
     payload, _ = await register(users)
