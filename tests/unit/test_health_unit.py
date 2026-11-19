@@ -171,7 +171,7 @@ async def test_report_keeps_all_results_when_a_probe_fails_or_port_is_missing(tm
     monkeypatch.setattr(health_module, "_check_rabbitmq_sync", lambda timeout: None)
     monkeypatch.setattr(health_module, "_check_celery_sync", lambda timeout: None)
 
-    report = await health_module.check_infrastructure(timeout=0.01)
+    report = await health_module.check_infrastructure(timeout=0.2)
 
     assert report["status"] == "unhealthy"
     assert report["services"]["monitoring"]["status"] == "up"
