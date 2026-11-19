@@ -127,7 +127,7 @@ async def test_get_monitor_returns_exact_record_for_its_owner(clients):
     assert response.json() == created
 
 
-async def test_get_monitor_rejects_other_owner(clients):
+async def test_get_monitor_other_owner_returns_404(clients):
     users, monitoring, _ = clients
     _, owner_headers = await authorized_user(users)
     _, stranger_headers = await authorized_user(users)
@@ -135,7 +135,8 @@ async def test_get_monitor_rejects_other_owner(clients):
 
     response = await safe_request("GET", f"/monitors/{monitor['id']}", stranger_headers)
 
-    assert response.status_code == 401
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Monitor not found!"
 
 
 async def test_get_monitor_unknown_uuid_returns_404(clients):
@@ -145,7 +146,7 @@ async def test_get_monitor_unknown_uuid_returns_404(clients):
     response = await safe_request("GET", f"/monitors/{uuid4()}", headers)
 
     assert response.status_code == 404
-    assert response.json()["detail"] == "Monitor not found"
+    assert response.json()["detail"] == "Monitor not found!"
 
 
 async def test_get_monitor_invalid_uuid_returns_422(clients):
@@ -185,7 +186,7 @@ async def test_delete_monitor_returns_204_and_removes_database_row(clients):
     assert monitor["id"] not in {row["id"] for row in listing.json()}
 
 
-async def test_delete_monitor_other_owner_returns_401_and_preserves_record(clients):
+async def test_delete_monitor_other_owner_returns_404_and_preserves_record(clients):
     users, monitoring, engine = clients
     owner_id, owner_headers = await authorized_user(users)
     _, stranger_headers = await authorized_user(users)
@@ -193,7 +194,8 @@ async def test_delete_monitor_other_owner_returns_401_and_preserves_record(clien
 
     response = await safe_request("DELETE", f"/monitors/{monitor['id']}", stranger_headers)
 
-    assert response.status_code == 401
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Monitor not found!"
 
     async with async_sessionmaker(engine)() as session:
         row = await session.get(MonitorModel, UUID(monitor["id"]))
@@ -208,7 +210,7 @@ async def test_delete_monitor_unknown_uuid_returns_404(clients):
     response = await safe_request("DELETE", f"/monitors/{uuid4()}", headers)
 
     assert response.status_code == 404
-    assert response.json()["detail"] == "Monitor not found"
+    assert response.json()["detail"] == "Monitor not found!"
 
 
 async def test_delete_monitor_invalid_uuid_returns_422(clients):
