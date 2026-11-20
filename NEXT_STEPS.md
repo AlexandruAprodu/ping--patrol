@@ -8,7 +8,9 @@
 
 # FAK-01 | GET /health — Configurable HTTP test target
 
-Former tracking issue: [#undefined](https://github.com/AlexandruAprodu/ping--patrol/issues/undefined)
+**Implementation owner: ChatGPT.** Status: pending.
+
+Former tracking issue: [#20](https://github.com/AlexandruAprodu/ping--patrol/issues/20)
 
 ## Objective
 Fake Target simulates a healthy HTTP URL, an HTTP error, or a slow response so Monitoring can be tested without external dependencies.
@@ -45,7 +47,9 @@ If Mode is `{"status_code":201,"delay_ms":0}`: **HTTP 201** and `healthy:true`. 
 
 # FAK-02 | GET /__test__/state — Read target mode
 
-Former tracking issue: [#undefined](https://github.com/AlexandruAprodu/ping--patrol/issues/undefined)
+**Implementation owner: ChatGPT.** Status: pending.
+
+Former tracking issue: [#21](https://github.com/AlexandruAprodu/ping--patrol/issues/21)
 
 ## Objective
 The test runner can inspect Fake Target's current configuration even when `/health` is simulating an error.
@@ -80,7 +84,9 @@ If no configuration has been applied, the response is `{"status_code":200,"delay
 
 # FAK-03 | POST /__test__/mode — Configure test failure
 
-Former tracking issue: [#undefined](https://github.com/AlexandruAprodu/ping--patrol/issues/undefined)
+**Implementation owner: ChatGPT.** Status: pending.
+
+Former tracking issue: [#22](https://github.com/AlexandruAprodu/ping--patrol/issues/22)
 
 ## Objective
 The test runner configures **all** Fake Target behavior in a single request; Monitoring can then observe the real status code and delay from `GET /health`.
@@ -120,7 +126,9 @@ Afterward, `GET /health` returns **HTTP 503 after the delay**, and `GET /__test_
 
 # FAK-04 | POST /__test__/reset — Restore default mode
 
-Former tracking issue: [#undefined](https://github.com/AlexandruAprodu/ping--patrol/issues/undefined)
+**Implementation owner: ChatGPT.** Status: pending.
+
+Former tracking issue: [#23](https://github.com/AlexandruAprodu/ping--patrol/issues/23)
 
 ## Objective
 Reset Fake Target to a healthy response with no delay, regardless of which error was simulated.
